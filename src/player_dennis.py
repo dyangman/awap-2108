@@ -28,7 +28,7 @@ class Player(BasePlayer):
 
         for neighbor in self.board[node]:
             neighbor_owner = self.board.nodes[neighbor]['owner']
-            if node_owner == neighbor_owner or  neighbor_owner is None:
+            if node_owner == neighbor_owner or neighbor_owner is None:
                 continue
 
             neighbor_units = self.board.nodes[neighbor]['old_units']
@@ -135,33 +135,29 @@ class Player(BasePlayer):
         """
         Insert player logic here to determine where to place your units
         """
-        
-        frontier_nodes = []
-        threatened_nodes = []
+
+        possible_targets = []
+        possible_fortifications = []
 
         for node in self.nodes:
             if self.is_frontier_node(node):
-                frontier_nodes.append(node)
+                enemy_node, advantage = self.best_node_advantage(node)
+                possible_targets.append((node, enemy_node, advantage))
             if self.is_threatened_node(node):
-                threatened_nodes.append(node)
-
-        possible_targets = []
-        for frontier_node in frontier_nodes:
-            node, advantage = self.best_node_advantage(frontier_node)
-            possible_targets.append((frontier_node, node, advantage))
-
-        possible_fortifications = []
-        for threatened_node in threatened_nodes:
-            threat = self.worst_node_threat(threatened_node)
-            possible_fortifications.append((threatened_node, threat))
+                threat = self.worst_node_threat(node)
+                possible_fortifications.append((node, threat))
 
         possible_targets = sorted(possible_targets, key=lambda x: x[2], reverse=True)
         possible_fortifications = sorted(possible_fortifications, key=lambda x: x[1], reverse=True)
 
         available_units = self.max_units
+        # print('Placing %d' % available_units)
 
+        print(possible_fortifications)
         for node, threat_level in possible_fortifications:
-            required = threat_level + 1
+            if threat_level > 0:
+                continue
+            required = 1 - threat_level
             if required <= available_units:
                 self.place_unit(node, required)
                 available_units -= required
@@ -189,18 +185,17 @@ class Player(BasePlayer):
                 break
 
         # Place remaining somewhere
-        for node in self.nodes:
-            self.place_unit(node, available_units)
-            available_units = 0
-            break
+        if available_units > 0:
+            for node in self.nodes:
+                self.place_unit(node, available_units)
+                available_units = 0
+                break
 
         print(available_units)
             # print('Options')
             # print(frontier_nodes)
             # for current_node, target_node, advantage in possible_targets:
             #     print("%d %d %d" % (current_node, target_node, advantage))
-
-        
 
         return self.dict_moves #Returns moves built up over the phase. Do not modify!
 
@@ -212,29 +207,28 @@ class Player(BasePlayer):
         Insert player logic here to determine where to move your units
         """
 
-        frontier_nodes = []
+        possible_targets = []
 
         for node in self.nodes:
             if self.is_frontier_node(node):
-                frontier_nodes.append(node)
+                enemy_node, advantage = self.best_node_advantage(node)
+                possible_targets.append((node, enemy_node, advantage))
 
-        possible_targets = []
-        for frontier_node in frontier_nodes:
-            node, advantage = self.best_node_advantage(frontier_node)
-            possible_targets.append((frontier_node, node, advantage))
+        for node, enemy_node, advantage in possible_targets:
 
-        for target in possible_targets:
+            friendly_units = self.board.nodes[node]['old_units']
+            enemy_units = self.board.nodes[enemy_node]['old_units']
+            enemy_owner = self.board.nodes[enemy_node]['owner']
 
-
-            friendly_units = self.board.nodes[target[0]]['old_units']
-            enemy_units = self.board.nodes[target[1]]['old_units']
-
-            # print('Info')
-            # print(target)
-            # print(friendly_units)
-            # print(enemy_units)
-
-            if friendly_units >= enemy_units + 2:
-                self.move_unit(target[0], target[1], friendly_units - 1)            
+            if enemy_owner is None:
+                if friendly_units >= enemy_units + 2:
+                    move_units = enemy_units + 1
+                    self.move_unit(node, enemy_node, move_units)
+            else:
+                if friendly_units > enemy_units + 2:
+                    move_units = enemy_units + 1
+                    if (int)(friendly_units / 2) >= (enemy_units + 1):
+                        move_units = (int)(friendly_units / 2)
+                    self.move_unit(node, enemy_node, move_units)
 
         return self.dict_moves #Returns moves built up over the phase. Do not modify!
