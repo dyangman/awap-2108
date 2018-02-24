@@ -161,37 +161,46 @@ class Player(BasePlayer):
         available_units = self.max_units
 
         for node, threat_level in possible_fortifications:
-            if threat_level <= available_units:
-                self.place_unit(node, threat_level)
-                available_units -= threat_level
+            required = threat_level + 1
+            if required <= available_units:
+                self.place_unit(node, required)
+                available_units -= required
             else:
                 self.place_unit(node, available_units)
                 available_units = 0
 
-
-        # print('Available')
-        # print(available_units)
-        for target in possible_targets:
-            advantage = target[2]
+        for current_node, target_node, advantage in possible_targets:
+            
             if advantage <= 2:
                 required_units = 2 - advantage
                 
                 if available_units > required_units:
-                    # print('Placed ' + str(required_units) + ' at ' + str(target[0]))
-                    self.place_unit(target[0], required_units)
+                    self.place_unit(current_node, required_units)
                     available_units -= required_units
                 else:
-                    # print('Placed ' + available_units + ' at ' + str(target[0]))
-                    self.place_unit(target[0], available_units)
+                    self.place_unit(current_node, available_units)
                     available_units = 0
 
         # print('remaining')
-        print(available_units)
+        if available_units > 0:
+            for node, threat_level in possible_fortifications:
+                self.place_unit(node, available_units)
+                available_units = 0
+                break
 
-        # # Place remaining somewhere
-        # for target:
-        #     self.place_unit(node, available_units)
-        #     break
+        # Place remaining somewhere
+        for node in self.nodes:
+            self.place_unit(node, available_units)
+            available_units = 0
+            break
+
+        print(available_units)
+            # print('Options')
+            # print(frontier_nodes)
+            # for current_node, target_node, advantage in possible_targets:
+            #     print("%d %d %d" % (current_node, target_node, advantage))
+
+        
 
         return self.dict_moves #Returns moves built up over the phase. Do not modify!
 
