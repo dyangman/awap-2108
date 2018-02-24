@@ -43,13 +43,14 @@ class Player(BasePlayer):
 
             # Initalize dictionary for each player
             if node_owner not in players:
-                players[node_owner] = {'Total Units' : 0, 'Frontier Nodes' : 0, 'Total Nodes' : 0}
+                players[node_owner] = {'total_units' : 0, 'frontier_nodes' : 0, 'total_nodes' : 0, 'frontier_units' : 0}
         
-            players[node_owner]['Total Units'] += node_units
-            players[node_owner]['Total Nodes'] += 1
+            players[node_owner]['total_nodes'] += 1
+            players[node_owner]['total_units'] += node_units
 
             if self.is_frontier_node(node):
-                players[node_owner]['Frontier Nodes'] += 1
+                players[node_owner]['frontier_nodes'] += 1
+                players[node_owner]['frontier_units'] += node_units
 
         return players
 
