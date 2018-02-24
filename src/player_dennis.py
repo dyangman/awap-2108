@@ -17,6 +17,29 @@ class Player(BasePlayer):
         """
         return
 
+
+    """
+    Returns most threatening node
+    """
+    def worst_node_threat(self, node):
+        worst_threat = None
+        node_owner = self.board.nodes[node]['owner']
+        node_units = self.board.nodes[node]['old_units']
+
+        for neighbor in self.board[node]:
+            neighbor_owner = self.board.nodes[neighbor]['owner']
+            if node_owner == neighbor_owner or  neighbor_owner is None:
+                continue
+
+            neighbor_units = self.board.nodes[neighbor]['old_units']
+
+            advantage = node_units - neighbor_units
+            if worst_threat is None or advantage < worst_threat:
+                worst_threat = advantage
+
+        return worst_threat
+
+
     """
     Returns node of least resistance
     """
@@ -114,23 +137,40 @@ class Player(BasePlayer):
         """
         
         frontier_nodes = []
+        threatened_nodes = []
 
         for node in self.nodes:
             if self.is_frontier_node(node):
                 frontier_nodes.append(node)
+            if self.is_threatened_node(node):
+                threatened_nodes.append(node)
 
         possible_targets = []
         for frontier_node in frontier_nodes:
             node, advantage = self.best_node_advantage(frontier_node)
             possible_targets.append((frontier_node, node, advantage))
 
-        possible_targets = sorted(possible_targets, key=lambda x: x[2], reverse=True)
+        possible_fortifications = []
+        for threatened_node in threatened_nodes:
+            threat = self.worst_node_threat(threatened_node)
+            possible_fortifications.append((threatened_node, threat))
 
-        print(possible_targets)
+        possible_targets = sorted(possible_targets, key=lambda x: x[2], reverse=True)
+        possible_fortifications = sorted(possible_fortifications, key=lambda x: x[1], reverse=True)
 
         available_units = self.max_units
-        print('Available')
-        print(available_units)
+
+        for node, threat_level in possible_fortifications:
+            if threat_level <= available_units:
+                self.place_unit(node, threat_level)
+                available_units -= threat_level
+            else:
+                self.place_unit(node, available_units)
+                available_units = 0
+
+
+        # print('Available')
+        # print(available_units)
         for target in possible_targets:
             advantage = target[2]
             if advantage <= 2:
@@ -145,13 +185,13 @@ class Player(BasePlayer):
                     self.place_unit(target[0], available_units)
                     available_units = 0
 
-        print('remaining')
+        # print('remaining')
         print(available_units)
 
-        # Place remaining somewhere
-        for node in self.nodes:
-            self.place_unit(node, available_units)
-            break
+        # # Place remaining somewhere
+        # for target:
+        #     self.place_unit(node, available_units)
+        #     break
 
         return self.dict_moves #Returns moves built up over the phase. Do not modify!
 
@@ -186,6 +226,6 @@ class Player(BasePlayer):
             # print(enemy_units)
 
             if friendly_units >= enemy_units + 2:
-                self.move_unit(target[0], target[1], enemy_units + 1)            
+                self.move_unit(target[0], target[1], friendly_units - 1)            
 
         return self.dict_moves #Returns moves built up over the phase. Do not modify!
