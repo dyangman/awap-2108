@@ -15,6 +15,9 @@ class Player(BasePlayer):
         """
         Insert player-specific initialization code here
         """
+        
+        self.turns = 0
+
         return
 
 
@@ -125,6 +128,9 @@ class Player(BasePlayer):
         """
         Insert any player-specific turn initialization code here
         """
+
+        self.turns += 1
+
         return
 
 
@@ -214,6 +220,28 @@ class Player(BasePlayer):
                 enemy_node, advantage = self.best_node_advantage(node)
                 possible_targets.append((node, enemy_node, advantage))
 
+        owned_nodes = self.find_player_stats()[self.player_num]['total_nodes']
+
+        mod_term = 0
+
+        if owned_nodes >= 22 : 
+            mod_term = owned_nodes - 17
+        elif owned_nodes == 12 or owned_nodes == 16 : 
+            mod_term = 5
+        elif owned_nodes == 13 or owned_nodes == 17 : 
+            mod_term = 4
+        elif owned_nodes == 14 or owned_nodes == 18 or owned_nodes == 19 :
+            mod_term = 3
+        elif owned_nodes == 15 or owned_nodes == 20 or owned_nodes == 21 : 
+            mod_term = 1
+        else:
+            mod_term = 0
+
+        if self.turns > 180:
+            mod_term = 0
+
+        mod_term *= 5
+
         for node, enemy_node, advantage in possible_targets:
 
             friendly_units = self.board.nodes[node]['old_units']
@@ -225,9 +253,9 @@ class Player(BasePlayer):
                     move_units = enemy_units + 1
                     self.move_unit(node, enemy_node, move_units)
             else:
-                if friendly_units > enemy_units + 2:
+                if (friendly_units > enemy_units + 2 + mod_term):
                     move_units = enemy_units + 1
-                    if (int)(friendly_units / 2) >= (enemy_units + 1):
+                    if (int)(friendly_units / 2) >= (enemy_units + 1) + mod_term:
                         move_units = (int)(friendly_units / 2)
                     self.move_unit(node, enemy_node, move_units)
 
