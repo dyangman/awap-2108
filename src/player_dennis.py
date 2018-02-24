@@ -18,7 +18,19 @@ class Player(BasePlayer):
         return
 
     """
-    Returns the statistics on each player
+    Determines if node is adjacent to an enemy
+    """
+    def is_threatened_node(self, node):
+        node_owner = self.board.nodes[node]['owner']
+        for neighbor in self.board[node]:
+            neighbor_owner = self.board.nodes[neighbor]['owner']
+            if neighbor_owner != None and neighbor_owner != node_owner:
+                return True
+        return False
+
+
+    """
+    Determines if node is on the frontier
     """
     def is_frontier_node(self, node):
         for neighbor in self.board[node]:
@@ -43,7 +55,7 @@ class Player(BasePlayer):
 
             # Initalize dictionary for each player
             if node_owner not in players:
-                players[node_owner] = {'total_units' : 0, 'frontier_nodes' : 0, 'total_nodes' : 0, 'frontier_units' : 0}
+                players[node_owner] = {'total_units' : 0, 'frontier_nodes' : 0, 'total_nodes' : 0, 'frontier_units' : 0, 'threatened_nodes' : 0}
         
             players[node_owner]['total_nodes'] += 1
             players[node_owner]['total_units'] += node_units
@@ -51,6 +63,9 @@ class Player(BasePlayer):
             if self.is_frontier_node(node):
                 players[node_owner]['frontier_nodes'] += 1
                 players[node_owner]['frontier_units'] += node_units
+
+            if self.is_threatened_node(node):
+                players[node_owner]['threatened_nodes'] += 1
 
         return players
 
