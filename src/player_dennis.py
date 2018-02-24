@@ -240,7 +240,7 @@ class Player(BasePlayer):
         if self.turns > 180:
             mod_term = 0
 
-        mod_term *= 5
+        mod_term *= 1000
 
         for node, enemy_node, advantage in possible_targets:
 
@@ -249,7 +249,7 @@ class Player(BasePlayer):
             enemy_owner = self.board.nodes[enemy_node]['owner']
 
             if enemy_owner is None:
-                if friendly_units >= enemy_units + 2:
+                if friendly_units >= enemy_units + 2 + mod_term:
                     move_units = enemy_units + 1
                     self.move_unit(node, enemy_node, move_units)
             else:
